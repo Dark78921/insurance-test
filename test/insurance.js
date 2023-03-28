@@ -67,6 +67,15 @@ describe("Insurance", function() {
             const {insurance} = await loadFixture(deploy3MonthsInsuranceFixture);
             await expect(insurance.withdraw(0)).to.be.revertedWith("You have no any deposited amount for this product")
         });
+        it("Should rever with the right error if withdraw twice", async function() {
+            const {insurance, insuranceTime, owner} = await loadFixture(deploy3MonthsInsuranceFixture);
+            for (let i = 0; i < 141; i++) {
+                await insurance.deposit(i);
+            }
+            await time.increaseTo((await time.latest()) + insuranceTime);
+            await expect(insurance.withdraw(0)).not.be.reverted;
+            await expect(insurance.withdraw(0)).to.be.revertedWith("You have no any deposited amount for this product");
+        })
         it("Should revert with the right error if insurance is not started", async function() {
             const {insurance} = await loadFixture(deploy3MonthsInsuranceFixture);
             await insurance.deposit(0);

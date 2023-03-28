@@ -15,7 +15,7 @@ contract Insurance {
 
     uint256 private _startInsuranceTime;
     uint256 private _totalDepositedAmount;
-    mapping(address => mapping(uint256 => bool)) public isDeposited; 
+    mapping(address => uint256) public isDeposited; 
 
     address payable public owner;
 
@@ -36,13 +36,13 @@ contract Insurance {
     }
 
     function deposit(uint256 _productID) external {
-        require(isDeposited[msg.sender][_productID] == false, "Already deposited!");
+        require((1 & (isDeposited[msg.sender] >> _productID)) == 0, "Already deposited!");
         require(_startInsuranceTime == 0, "Insurance is already started!");
         require(_productID < 256, "Invalid product id");
 
         uint256 amount = 50 * (_productID + 1) * 10 ** 18;
         IERC20(USDT_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
-        isDeposited[msg.sender][_productID] = true;
+        isDeposited[msg.sender] += 1 << _productID;
 
         _totalDepositedAmount += amount;
         if (_totalDepositedAmount >= INSURANCE_AMOUNT) {
@@ -54,26 +54,22 @@ contract Insurance {
         emit Deposit(msg.sender, _productID);
     }
 
-    function withdraw(uint256 _productId) public {
-        require(isDeposited[msg.sender][_productId], "You have no any deposited amount for this product");
+    function withdraw(uint256 _productID) public {
+        require((1 & (isDeposited[msg.sender] >> _productID)) == 1, "You have no any deposited amount for this product");
         require(_startInsuranceTime != 0, "Insurance is not started yet");
         require(_startInsuranceTime + INSURANCE_PERIOD <= block.timestamp, "Still insurance period");
 
-        isDeposited[msg.sender][_productId] = false;
+        isDeposited[msg.sender] -= 1 << _productID;
     
-        uint256 rewardAmount = 100 * (_productId + 1) * 10 ** 18;
+        uint256 rewardAmount = 100 * (_productID + 1) * 10 ** 18;
         uint256 contractUnoBalance = IERC20(UNO_ADDRESS).balanceOf(address(this));
         rewardAmount = rewardAmount <= contractUnoBalance ? rewardAmount : contractUnoBalance;
         
         IERC20(UNO_ADDRESS).safeTransfer(msg.sender, rewardAmount);
 
-        uint256 depositAmount = 50 * (_productId + 1) * 10 ** 18;
+        uint256 depositAmount = 50 * (_productID + 1) * 10 ** 18;
         IERC20(USDT_ADDRESS).safeTransfer(msg.sender, depositAmount);
-        emit Withdraw(msg.sender, _productId, rewardAmount);
-    }
-
-    function withdrawUNO(uint256 amount) external onlyOwner {
-        IERC20(UNO_ADDRESS).safeTransfer(msg.sender, amount);
+        emit Withdraw(msg.sender, _productID, rewardAmount);
     }
 
     function getInsuranceStartedTime() external view returns (uint256) {
