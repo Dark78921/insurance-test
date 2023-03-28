@@ -28,7 +28,6 @@ contract Insurance {
         _;
     }
 
-    // do you think you can pass such arrays whose length is 256 in the constract?
     constructor(address _USDT_ADDRESS, address _UNO_ADDRESS) {
         owner = payable(msg.sender);
         USDT_ADDRESS = _USDT_ADDRESS;
@@ -70,9 +69,5 @@ contract Insurance {
         uint256 depositAmount = 50 * (_productID + 1) * 10 ** 18;
         IERC20(USDT_ADDRESS).safeTransfer(msg.sender, depositAmount);
         emit Withdraw(msg.sender, _productID, rewardAmount);
-    }
-
-    function getInsuranceStartedTime() external view returns (uint256) {
-        return _startInsuranceTime;
     }
 }
