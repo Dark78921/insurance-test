@@ -3,11 +3,13 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IRewarder.sol";
-import "./libraries/TransferHelper.sol";
 
 contract Rewarder is IRewarder, Ownable {
+    using SafeERC20 for IERC20;
+
     address public immutable UNO;
     address public immutable UNO_MASTER_CHEF;
 
@@ -27,7 +29,7 @@ contract Rewarder is IRewarder, Ownable {
             amount = rewardBal;
         }
 
-        TransferHelper.safeTransfer(UNO, to, amount);
+        IERC20(UNO).safeTransfer(UNO, to, amount);
         return amount;
     }
 
@@ -36,6 +38,6 @@ contract Rewarder is IRewarder, Ownable {
         address _to,
         uint256 _amount
     ) external onlyOwner {
-        TransferHelper.safeTransfer(_token, _to, _amount);
+        IERC20(_token).safeTransfer(_to, _amount);
     }
 }
