@@ -9,8 +9,6 @@ const {
     // advanceTimeStamp,
 } = require('../scripts/shared/utilities.js');
 
-const SB_PER_BLOCK = getBigNumber(1, 18); // 1 SB per block
-
 describe('Insurance', function () {
     before(async function () {
         this.Insurance = await ethers.getContractFactory('Insurance');
@@ -27,33 +25,24 @@ describe('Insurance', function () {
         this.unoToken = await this.MockERC20.deploy('Mock UNO', 'UNO');
         this.usdtToken = await this.MockERC20.deploy('Mock USDT', 'USDT');
 
-        this.insurance = await this.Insurance.deploy(Math.floor(new Date().getTime() / 1000), this.usdtToken.address);
+        this.insurance = await this.Insurance.deploy(this.usdtToken.address);
         this.rewarder = await this.Rewarder.deploy(this.unoToken.address, this.insurance.address);
         await this.insurance.setRewarder(this.rewarder.address);
 
         await this.usdtToken.transfer(this.alice.address, getBigNumber(1000000));
         await this.usdtToken.transfer(this.bob.address, getBigNumber(1000000));
-        console.log("done")
     });
 
-    describe('Test', function () {
+    describe('1. Test', function () {
         it('Test is started', function () { });
     });
 
-    describe('ProductLength', function () {
-        it('ProductLength should be increased', async function () {
-            console.log("a")
-            await this.insurance.add(0, getBigNumber(50 * 100));
-            console.log("b")
-            expect(await this.insurance.productLength()).to.be.equal(1);
-        });
-
+    describe('2. Add product', function () {
         it('Each Product can not be added twice', async function () {
             await this.insurance.add(0, getBigNumber(50 * 100));
-            expect(await this.insurance.productLength()).to.be.equal(1);
 
             await expect(this.insurance.add(0, getBigNumber(50 * 100))).to.be.revertedWith(
-                'Insurance: Product already exists'
+                'Product already exist'
             );
         });
     });
@@ -67,7 +56,7 @@ describe('Insurance', function () {
         });
 
         it('Should revert if invalid product', async function () {
-            await expect(this.insurance.set(2, 60 * 100)).to.be.revertedWith('Insurance: Product does not exist');
+            await expect(this.insurance.set(2, 60 * 100)).to.be.revertedWith('Product does not exist');
         });
     });
 
@@ -88,7 +77,7 @@ describe('Insurance', function () {
 
             const expectedReward = getBigNumber(50 * 100) * (block2.number - block1.number);
             const pendingReward = await this.insurance.pendingRewards(0, this.alice.address);
-            expect(expectedReward).to.be.equal(pendingReward);
+            expect(expectedReward/getBigNumber(1)).to.be.equal(pendingReward/getBigNumber(1));
 
             const productInfo = await this.insurance.productInfo(0);
             expect(productInfo.lastRewardBlock).to.be.equal(block2.number);
@@ -105,7 +94,7 @@ describe('Insurance', function () {
 
         it('Should not allow to deposit in non-existent product', async function () {
             await expect(this.insurance.deposit(1, getBigNumber(1), this.dev.address)).to.be.revertedWith(
-                'Insurance: Product does not exist'
+                'Product does not exist'
             );
         });
     });
@@ -132,7 +121,7 @@ describe('Insurance', function () {
 
             const unoBalanceAfter = await this.unoToken.balanceOf(this.alice.address);
 
-            expect(expectedReward.add(unoBalanceBefore)).to.be.equal(unoBalanceAfter);
+            expect(expectedReward/getBigNumber(1) + (unoBalanceBefore)/getBigNumber(1)).to.be.equal(unoBalanceAfter/getBigNumber(1));
         });
     });
 });

@@ -35,8 +35,6 @@ contract Insurance is Ownable, ReentrancyGuard {
 
     uint256 private constant ACC_UNO_PRECISION = 1e12;
 
-    uint256 public immutable rewardStartTimestamp;
-
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Withdraw(address indexed to, uint256 indexed pid, uint256 amount);
     event Harvest(address indexed user, uint256 indexed pid, uint256 pending, uint256 harvested);
@@ -45,9 +43,7 @@ contract Insurance is Ownable, ReentrancyGuard {
     event LogUpdateProduct(uint256 indexed pid, uint256 lastRewardBlock, uint256 supply, uint256 accUNOPerShare);
     event LogSetRewarder(address indexed _user, address indexed _rewarder);
 
-    constructor(uint256 _rewardTimestamp, address _USDT_ADDRESS) {
-        require(_rewardTimestamp >= block.timestamp, " Invalid reward start timestamp");
-        rewardStartTimestamp = _rewardTimestamp;
+    constructor(address _USDT_ADDRESS) {
         USDT_ADDRESS = _USDT_ADDRESS;
     }
 
@@ -135,7 +131,6 @@ contract Insurance is Ownable, ReentrancyGuard {
     /// @param to The receiver of `amount` deposit benefit.
     function deposit(uint256 pid, uint256 amount, address to) external nonReentrant {
         require((1 & (productExistence >> pid)) == 1, "Product does not exist");
-        require(block.timestamp > rewardStartTimestamp, "Deposit is not started yet");
         ProductInfo storage product = productInfo[pid];
         UserInfo storage user = userInfo[pid][to];
         _updateProduct(pid);
