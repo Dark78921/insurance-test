@@ -29,7 +29,7 @@ contract Rewarder is IRewarder, Ownable {
             amount = rewardBal;
         }
 
-        IERC20(UNO).safeTransfer(UNO, to, amount);
+        IERC20(UNO).safeTransfer(to, amount);
         return amount;
     }
 
